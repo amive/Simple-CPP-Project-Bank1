@@ -11,6 +11,7 @@ using namespace std;
 
 const string fileName = "Clients.txt";
 
+
 string tabs(int amount) {
 	string t = "";
 	for (int i = 0; i < amount; i++) {
@@ -44,6 +45,10 @@ struct stClients {
 	string phoneNum;
 	float balance;
 };
+
+void menuNavigation(vector <stClients>& vClients);
+void transactionsNavigation(vector <stClients>& vClients);
+void goBackToMainMenu(vector <stClients>& vClients);
 
 bool findClientByAccNum(string accNum, stClients& client);
 
@@ -149,23 +154,32 @@ void printAllClients(vector <stClients> vClients) {
 
 void displayMainMenuScreen() {
 	cout << "\n=================================" << endl;
-	cout << setw(21) << "Main Menu" << endl;
+	cout <<"\t   Main Menu" << endl;
 	cout << "=================================" << endl;
 	cout << "   [1] Show Client List" << endl;
 	cout << "   [2] Add New Client" << endl;
 	cout << "   [3] Delete Client" << endl;
 	cout << "   [4] Update Client Info" << endl;
 	cout << "   [5] Find Client" << endl;
-	cout << "   [6] Exit" << endl;
+	cout << "   [6] Transactions" << endl; //Extension
+	cout << "   [7] Exit" << endl;
 	cout << "=================================" << endl;
 }
 
 int readMenuChoice() {
 	int choice;
-	cout << "\nChoose an option [1-6]: ";
+	cout << "\nChoose an option [1-7]: ";
 	choice = myLib::readNum();
 	return choice;
 }
+
+int readTransactionsMenuChoice() {
+	int choice;
+	cout << "\nChoose an option [1-4]: ";
+	choice = myLib::readNum();
+	return choice;
+}
+
 
 void printTableHeader() {
 	cout << "\n______________________________________________________________________________________________________________________\n\n";
@@ -223,7 +237,7 @@ bool markClientForDelete(string accNum, vector <stClients>& vClients) {
 	return false;
 }
 
-//Options
+//Main Menu Options
 
 void showClientList(vector <stClients> vClients) {
 	cout << "\n" << tabs(6) << "Client List (" << vClients.size() << ") Client(s).";
@@ -351,9 +365,154 @@ void findClient() {
 	printClientDetails(client);
 }
 
+	//Extension
+void displayTransactionsMenu() {
+	cout << "\n=================================" << endl;
+	cout << "\tTransactions Menu" << endl;
+	cout << "=================================" << endl;
+	cout << "   [1] Deposit" << endl;
+	cout << "   [2] Withdraw" << endl;
+	cout << "   [3] Total balances" << endl;
+	cout << "   [4] Main menu" << endl;
+	cout << "=================================" << endl;
+}
+	//Transactions Menu Options
+void deposit(vector <stClients>& vClients) {
+	cout << "\n--------------------------------------" << endl;
+	cout << tabs(1) << " Deposit Screen" << endl;
+	cout << "--------------------------------------" << endl;
+
+	stClients client;
+
+	string accNum = "";
+	cout << "Enter account number: ";
+	accNum = myLib::readString();
+
+	while (!findClientByAccNum(accNum, client)) {
+		cout << "\nClient Not Found, Enter a different account number: ";
+		accNum = myLib::readString();
+	}
+
+	printClientDetails(client);
+
+	float depositAmount = 0;
+	cout << "Enter deposit amount: ";
+	cin >> depositAmount;
+
+	char choice = 'Y';
+	cout << "Are you sure you want to perform this transaction (Y/N)? ";
+	cin >> choice;
+	if (choice == 'Y' || choice == 'y') {
+		for (stClients& c : vClients) {
+			if (c.accNum == accNum) {
+				c.balance += depositAmount;
+				overwriteFileData(fileName, vClients);
+				cout << "\nDeposit successfully, New balance: " << c.balance << endl;
+				break;
+			}
+		}
+	}
+	else return;
+}
+
+void withdraw(vector <stClients>& vClients) {
+	cout << "\n--------------------------------------" << endl;
+	cout << tabs(1) << " Withdraw Screen" << endl;
+	cout << "--------------------------------------" << endl;
+
+	stClients client;
+
+	string accNum = "";
+	cout << "Enter account number: ";
+	accNum = myLib::readString();
+
+	while (!findClientByAccNum(accNum, client)) {
+		cout << "\nClient Not Found, Enter a different account number: ";
+		accNum = myLib::readString();
+	}
+
+	printClientDetails(client);
+
+	float withdrawAmount = 0;
+	cout << "Enter withdraw amount: ";
+	cin >> withdrawAmount;
+
+		for (stClients& c : vClients) {
+			if (c.accNum == accNum) {
+				while (withdrawAmount > c.balance) {
+					cout << "Withdraw amount exceeds balance. Max withdraw: " << c.balance << ", Enter new value: ";
+					cin >> withdrawAmount;
+				}
+				char choice = 'Y';
+				cout << "Are you sure you want to perform this transaction (Y/N)? ";
+				cin >> choice;
+				if (choice == 'Y' || choice == 'y') {
+					c.balance -= withdrawAmount;
+					overwriteFileData(fileName, vClients);
+					cout << "\nWithdraw successfully, New balance: " << c.balance << endl;
+					break;
+				}
+				else return;
+		}
+	}
+}
+
+void printClientBalance(stClients client) {
+	cout << "| " << left << setw(21) << client.accNum << "| " << left << setw(47) << client.name << "| " << left << setw(35) << to_string(client.balance) << left << endl;
+}
+void showTotalBalances(vector <stClients> vClients) {
+	//Print Table Header
+	cout << "\n" << tabs(6) << "Balances List (" << vClients.size() << ") Client(s).";
+	cout << "\n______________________________________________________________________________________________________________________\n\n";
+	cout << "| " << left << setw(21) << "Account Number" << "| " << left << setw(47) << "Client Name" << "| " << left << setw(35) << "Balance" << left << endl;
+	cout << "______________________________________________________________________________________________________________________\n\n";
+
+
+	//Print All Clients AND Count the sum of balances.
+	int balances = 0;
+	for (stClients c : vClients) {
+		printClientBalance(c);
+		balances += c.balance;
+	}
+	cout << "______________________________________________________________________________________________________________________";
+	cout << "\n\n" << tabs(6) << "Total Balances: " << balances << "." << endl;
+}
+
 //Menu Navigation System
-void menuNavigation(vector <stClients>& vClients);
-void showMainMenu(vector <stClients>& vClients) {
+void goBackToTransactionsMenu(vector <stClients>& vClients) {
+	cout << "\nPress any key to go back to the transactions menu...";
+	system("pause > 0");
+	transactionsNavigation(vClients);
+}
+void transactionsNavigation(vector <stClients>& vClients) {
+	system("cls");
+	int choice = 0;
+	displayTransactionsMenu();
+	choice = readTransactionsMenuChoice();
+	stClients client;
+
+	switch (choice) {
+	case 1:
+		system("cls");
+		deposit(vClients);
+		goBackToTransactionsMenu(vClients);
+		break;
+	case 2:
+		system("cls");
+		withdraw(vClients);
+		goBackToTransactionsMenu(vClients);
+		break;
+	case 3:
+		system("cls");
+		showTotalBalances(vClients);
+		goBackToTransactionsMenu(vClients);
+		break;
+	default:
+		menuNavigation(vClients);
+	}
+}
+
+void goBackToMainMenu(vector <stClients>& vClients) {
 	cout << "\nPress any key to go back to the main menu...";
 	system("pause > 0");
 	menuNavigation(vClients);
@@ -369,29 +528,33 @@ void menuNavigation(vector <stClients>& vClients) {
 	case 1: 
 		system("cls");
 		showClientList(vClients);
-		showMainMenu(vClients);
+		goBackToMainMenu(vClients);
 		break;
 	case 2:
 		system("cls");
 		AddNewClient(vClients);
-		showMainMenu(vClients);
+		goBackToMainMenu(vClients);
 		break;
 	case 3:
 		system("cls");
 		deleteClient(vClients);
-		showMainMenu(vClients);
+		goBackToMainMenu(vClients);
 		break;
 	case 4:
 		system("cls");
 		updateClientInfo(vClients);
-		showMainMenu(vClients);
+		goBackToMainMenu(vClients);
 		break;
 	case 5:
 		system("cls");
 		findClient();
-		showMainMenu(vClients);
+		goBackToMainMenu(vClients);
 		break;
 	case 6:
+		system("cls");
+		transactionsNavigation(vClients);
+		break;
+	default:
 		return;
 	}
 }
